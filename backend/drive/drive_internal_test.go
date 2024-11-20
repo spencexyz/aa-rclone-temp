@@ -524,6 +524,51 @@ func (f *Fs) InternalTestCopyID(t *testing.T) {
 	})
 }
 
+// TestIntegration/FsMkdir/FsPutFiles/Internal/MoveID
+func (f *Fs) InternalTestMoveID(t *testing.T) {
+	ctx := context.Background()
+	obj, err := f.NewObject(ctx, existingFile)
+	require.NoError(t, err)
+	o := obj.(*Object)
+
+	dir := t.TempDir()
+
+	checkFile := func(name string) {
+		filePath := filepath.Join(dir, name)
+		fi, err := os.Stat(filePath)
+		require.NoError(t, err)
+		assert.Equal(t, int64(100), fi.Size())
+		err = os.Remove(filePath)
+		require.NoError(t, err)
+	}
+
+	t.Run("BadID", func(t *testing.T) {
+		err = f.moveID(ctx, "ID-NOT-FOUND", dir+"/")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "couldn't find id")
+	})
+
+	t.Run("Directory", func(t *testing.T) {
+		rootID, err := f.dirCache.RootID(ctx, false)
+		require.NoError(t, err)
+		err = f.moveID(ctx, rootID, dir+"/")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "can't copy directory")
+	})
+
+	t.Run("WithoutDestName", func(t *testing.T) {
+		err = f.moveID(ctx, o.id, dir+"/")
+		require.NoError(t, err)
+		checkFile(path.Base(existingFile))
+	})
+
+	t.Run("WithDestName", func(t *testing.T) {
+		err = f.moveID(ctx, o.id, dir+"/potato.txt")
+		require.NoError(t, err)
+		checkFile("potato.txt")
+	})
+}
+
 // TestIntegration/FsMkdir/FsPutFiles/Internal/Query
 func (f *Fs) InternalTestQuery(t *testing.T) {
 	ctx := context.Background()
@@ -648,6 +693,7 @@ func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("Shortcuts", f.InternalTestShortcuts)
 	t.Run("UnTrash", f.InternalTestUnTrash)
 	t.Run("CopyID", f.InternalTestCopyID)
+	t.Run("MoveID", f.InternalTestMoveID)
 	t.Run("Query", f.InternalTestQuery)
 	t.Run("AgeQuery", f.InternalTestAgeQuery)
 	t.Run("ShouldRetry", f.InternalTestShouldRetry)
