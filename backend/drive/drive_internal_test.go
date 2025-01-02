@@ -504,7 +504,7 @@ func (f *Fs) InternalTestCopyOrMoveID(t *testing.T) {
 	})
 
 	t.Run("BadID", func(t *testing.T) {
-		err = f.copyOrMoveID(ctx, "move", "ID-NOT-FOUND", dir+"/")
+		err = f.copyOrMoveID(ctx, "moveid", "ID-NOT-FOUND", dir+"/")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "couldn't find id")
 	})
@@ -512,31 +512,31 @@ func (f *Fs) InternalTestCopyOrMoveID(t *testing.T) {
 	t.Run("Directory", func(t *testing.T) {
 		rootID, err := f.dirCache.RootID(ctx, false)
 		require.NoError(t, err)
-		err = f.copyOrMoveID(ctx, "move", rootID, dir+"/")
+		err = f.copyOrMoveID(ctx, "moveid", rootID, dir+"/")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "can't move directory")
 	})
 
 	t.Run("MoveWithoutDestName", func(t *testing.T) {
-		err = f.copyOrMoveID(ctx, "move", o.id, dir+"/")
+		err = f.copyOrMoveID(ctx, "moveid", o.id, dir+"/")
 		require.NoError(t, err)
 		checkFile(path.Base(existingFile))
 	})
 
 	t.Run("CopyWithoutDestName", func(t *testing.T) {
-		err = f.copyOrMoveID(ctx, "copy", o.id, dir+"/")
+		err = f.copyOrMoveID(ctx, "copyid", o.id, dir+"/")
 		require.NoError(t, err)
 		checkFile(path.Base(existingFile))
 	})
 
 	t.Run("MoveWithDestName", func(t *testing.T) {
-		err = f.copyOrMoveID(ctx, "move", o.id, dir+"/potato.txt")
+		err = f.copyOrMoveID(ctx, "moveid", o.id, dir+"/potato.txt")
 		require.NoError(t, err)
 		checkFile("potato.txt")
 	})
 
 	t.Run("CopyWithDestName", func(t *testing.T) {
-		err = f.copyOrMoveID(ctx, "copy", o.id, dir+"/potato.txt")
+		err = f.copyOrMoveID(ctx, "copyid", o.id, dir+"/potato.txt")
 		require.NoError(t, err)
 		checkFile("potato.txt")
 	})

@@ -3526,9 +3526,6 @@ func (f *Fs) unTrashDir(ctx context.Context, dir string, recurse bool) (r unTras
 
 // copy or move file with id to dest
 func (f *Fs) copyOrMoveID(ctx context.Context, operation string, id, dest string) (err error) {
-	if operation != "move" && operation != "copy" {
-		return fmt.Errorf("unknown operation %q - must be copy or move", operation)
-	}
 	info, err := f.getFile(ctx, id, f.getFileFields(ctx))
 	if err != nil {
 		return fmt.Errorf("couldn't find id: %w", err)
@@ -3557,7 +3554,7 @@ func (f *Fs) copyOrMoveID(ctx context.Context, operation string, id, dest string
 	}
 
 	var opErr error
-	if operation == "move" {
+	if operation == "moveid" {
 		_, opErr = operations.Move(ctx, dstFs, nil, destLeaf, o)
 	} else {
 		_, opErr = operations.Copy(ctx, dstFs, nil, destLeaf, o)
@@ -3778,27 +3775,46 @@ Result:
     }
 `,
 }, {
-	Name:  "copyOrMoveID",
-	Short: "Copy or move files by ID",
-	Long: `This command copies or moves files by ID
+	Name:  "copyid",
+	Short: "Copy files by ID",
+	Long: `This command copies files by ID
 
 Usage:
 
-    rclone backend copyOrMoveID drive: move/copy ID path
-    rclone backend copyOrMoveID drive: move/copy ID1 path1 ID2 path2
+    rclone backend copyid drive: ID path
 
-It copies or moves the drive file with ID given to the path (an rclone path which
-will be passed internally to rclone copyto or moveto). The ID and path pairs can be
-repeated. Must pass the move or copy param to dictate the action to take.
+It copies the drive file with ID given to the path (an rclone path which
+will be passed internally to rclone copyto).
 
-The path should end with a / to indicate copy or move the file as named to
+The path should end with a / to indicate copy the file as named to
 this directory. If it doesn't end with a / then the last path
 component will be used as the file name.
 
 If the destination is a drive backend then server-side copying will be
 attempted if possible.
 
-Use the --interactive/-i or --dry-run flag to see what would be copied or moved beforehand.
+Use the --interactive/-i or --dry-run flag to see what would be copied beforehand.
+`,
+}, {
+	Name:  "moveid",
+	Short: "Move files by ID",
+	Long: `This command moves files by ID
+
+Usage:
+
+    rclone backend moveid drive: ID path
+
+It moves the drive file with ID given to the path (an rclone path which
+will be passed internally to rclone moveto).
+
+The path should end with a / to indicate move the file as named to
+this directory. If it doesn't end with a / then the last path
+component will be used as the file name.
+
+If the destination is a drive backend then server-side moving will be
+attempted if possible.
+
+Use the --interactive/-i or --dry-run flag to see what would be moved beforehand.
 `,
 }, {
 	Name:  "exportformats",
@@ -3978,14 +3994,14 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 			dir = arg[0]
 		}
 		return f.unTrashDir(ctx, dir, true)
-	case "copyOrMoveID":
+	case "copyid", "moveid":
 		if len(arg)%2 == 0 {
 			return nil, errors.New("need an odd number of arguments")
 		}
 		for len(arg) > 0 {
-			operation, id, dest := arg[0], arg[1], arg[2]
+			id, dest := arg[0], arg[1]
 			arg = arg[3:]
-			err = f.copyOrMoveID(ctx, operation, id, dest)
+			err = f.copyOrMoveID(ctx, name, id, dest)
 			if err != nil {
 				return nil, fmt.Errorf("failed moving %q to %q: %w", id, dest, err)
 			}
