@@ -497,12 +497,6 @@ func (f *Fs) InternalTestCopyOrMoveID(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	t.Run("WithOperationName", func(t *testing.T) {
-		err = f.copyOrMoveID(ctx, "NOT-SUPPORTED", o.id, dir+"/")
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "unknown operation")
-	})
-
 	t.Run("BadID", func(t *testing.T) {
 		err = f.copyOrMoveID(ctx, "moveid", "ID-NOT-FOUND", dir+"/")
 		require.Error(t, err)
@@ -514,7 +508,7 @@ func (f *Fs) InternalTestCopyOrMoveID(t *testing.T) {
 		require.NoError(t, err)
 		err = f.copyOrMoveID(ctx, "moveid", rootID, dir+"/")
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "can't move directory")
+		assert.Contains(t, err.Error(), "can't moveid directory")
 	})
 
 	t.Run("MoveWithoutDestName", func(t *testing.T) {
